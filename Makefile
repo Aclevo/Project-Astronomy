@@ -34,7 +34,7 @@ compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
 LITTLEINIT_VERSION  =	
-LITTLEINIT          = main
+LITTLEINIT          = littleinit-main
 LITTLEINIT_TARBALL  = main.zip
 LITTLEINIT_LINK     = https://github.com/GNUfault/littleinit/archive/refs/heads/$(LITTLEINIT_TARBALL)
 LITTLEINIT_BUILDDIR = $(LITTLEINIT)/build
