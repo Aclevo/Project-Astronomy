@@ -36,7 +36,7 @@ compile-linux:
 UTIL-LINUX_VERSION = 2.41.3
 UTIL-LINUX         = util-linux-2.41.3
 UTIL-LINUX_TARBALL = $(UTIL-LINUX).tar.xz
-UTIL-LINUX_LINK    = https://www.kernel.org/pub/linux/utils/util-linux/v2.41/$(LITTLEINIT_TARBALL)
+UTIL-LINUX_LINK    = https://www.kernel.org/pub/linux/utils/util-linux/v2.41/$(UTIL-LINUX_TARBALL)
 
 initramfs-util-linux: download-util-linux untar-util-linux configure-initramfs-util-linux compile-util-linux
 
