@@ -14,7 +14,7 @@ all: linux
 linux: download-linux untar-linux configure-linux compile-linux # install-linux-headers install-linux
 
 download-linux:
-        if [ -f $(LINUX_TARBALL) ]; then \
+		if [ -f $(LINUX_TARBALL) ]; then \
                 wget $(LINUX_LINK)
         fi
 
@@ -25,7 +25,7 @@ untar-linux:
 
 configure-linux:
         if [ -f $(LINUX_CONFIG) ]; then \
-                make -j$(CPUS) -C $(LINUX) defconfig
+			make -j$(CPUS) -C $(LINUX) defconfig
         fi
 
 # For some reason this crashes my terminal
