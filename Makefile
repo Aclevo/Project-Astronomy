@@ -43,12 +43,12 @@ littleinit: download-littleinit untar-littleinit configure-littleinit compile-li
 
 download-littleinit:
 	if [ ! -f $(LITTLEINIT_TARBALL) ]; then \
-		wget $(LITTLEINIT_LINK) \
+		wget $(LITTLEINIT_LINK); \
 	fi
 
 untar-littleinit:
 	if [ ! -d $(LITTLEINIT) ]; then \
-		unzip $(LITTLEINIT_TARBALL) \
+		unzip $(LITTLEINIT_TARBALL); \
 	fi
 
 configure-littleinit:
