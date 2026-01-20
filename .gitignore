@@ -2,6 +2,9 @@
 linux-*
 linux-*.tar.xz
 
-# Littleinit
-littleinit-main
-main.zip
+# OpenRC
+0.63.tar.gz
+openrc-0.63
+
+# rootfs
+rootfs.img
