@@ -5,6 +5,7 @@ LINUX_VERSION = 6.18.6
 LINUX         = linux-$(LINUX_VERSION)
 LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
+LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
 all: linux
 
@@ -31,3 +32,6 @@ configure-linux:
 # that will be fixed soon!
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
+
+run:
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE)
