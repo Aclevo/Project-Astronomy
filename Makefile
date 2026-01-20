@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: linux
+all: disk linux
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -36,8 +36,13 @@ compile-linux:
 DISK_NAME = rootfs.qcow2
 DISK_SIZE = 80G
 
+disk: create-disk format-disk
+
 create-disk:
 	qemu-img create -f qcow2 $(DISK_NAME) $(DISK_SIZE)
+
+format-disk:
+	guestfish -a $(DISK_NAME) run : mkfs ext4 /dev/sda
 
 run:
 	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda console=ttyS0" -drive file=$(DISK_NAME),format=qcow2,index=0,media=disk -nographic
