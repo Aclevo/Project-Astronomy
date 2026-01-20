@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: linux littleinit build-initramfs
+all: linux initramfs-util-linux build-initramfs
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -33,36 +33,34 @@ configure-linux:
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
-LITTLEINIT_VERSION  =	
-LITTLEINIT          = littleinit-main
-LITTLEINIT_TARBALL  = main.zip
-LITTLEINIT_LINK     = https://github.com/GNUfault/littleinit/archive/refs/heads/$(LITTLEINIT_TARBALL)
-LITTLEINIT_BUILDDIR = $(LITTLEINIT)/build
+UTIL-LINUX_VERSION = 2.41.3
+UTIL-LINUX         = util-linux-2.41.3
+UTIL-LINUX_TARBALL = $(UTIL-LINUX).tar.xz
+UTIL-LINUX_LINK    = https://www.kernel.org/pub/linux/utils/util-linux/v2.41/$(LITTLEINIT_TARBALL)
 
-littleinit: download-littleinit untar-littleinit configure-littleinit compile-littleinit
+initramfs-util-linux: download-util-linux untar-util-linux configure-initramfs-util-linux compile-util-linux
 
-download-littleinit:
-	if [ ! -f $(LITTLEINIT_TARBALL) ]; then \
-		wget $(LITTLEINIT_LINK); \
+download-util-linux:
+	if [ ! -f $(UTIL-LINUX_TARBALL) ]; then \
+		wget $(UTIL-LINUX_LINK); \
 	fi
 
-untar-littleinit:
-	if [ ! -d $(LITTLEINIT) ]; then \
-		unzip $(LITTLEINIT_TARBALL); \
+untar-util-linux:
+	if [ ! -d $(UTIL-LINUX) ]; then \
+		unzip $(UTIL-LINUX_TARBALL); \
 	fi
 
-configure-littleinit:
-	mkdir -p $(LITTLEINIT_BUILDDIR)
-	cmake -S $(LITTLEINIT) -B $(LITTLEINIT_BUILDDIR)
+configure-initramfs-util-linux:
+	cd ./configure --disable-all-programs --enable-mount --enable-fsck --enable-switch_root --enable-libmount --enable-libblkid
 
-compile-littleinit:
-	make -j$(CPUS) -C $(LITTLEINIT_BUILDDIR)
+compile-util-linux:
+	make -j$(CPUS) -C $(UTIL-LINUX)
 
-INITRAMFS       = initramfs.cpio.gz
+INITRAMFS = initramfs.cpio.gz
 
 build-initramfs:
-	cd $(LITTLEINIT_BUILDDIR) && \
-	echo init | cpio -o -H newc | gzip > ../../$(INITRAMFS)
+	cd $(UTIL-LINUX) && \
+	find . | cpio -o -H newc | gzip > ../$(INITRAMFS)
 
 run:
 	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -initrd $(INITRAMFS) -append "init=/init console=ttyS0" -nographic
