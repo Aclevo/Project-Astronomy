@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: disk linux
+all: disk linux openrc
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -33,16 +33,35 @@ configure-linux:
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
-DISK_NAME = rootfs.qcow2
-DISK_SIZE = 80G
+openrc:
+	wget https://github.com/OpenRC/openrc/archive/refs/tags/0.63.tar.gz
+	tar -xvf 0.63.tar.gz
+	cd openrc-0.63 && \
+	meson setup build
+	ninja -C openrc-0.63/build
+	DESTDIR=../../root ninja -C openrc-0.63/build install
+
+DISK      = rootfs.img
+DISK_SIZE = 16G
 
 disk: create-disk format-disk
 
-create-disk:
-	qemu-img create -f qcow2 $(DISK_NAME) $(DISK_SIZE)
+$(DISK):
+	qemu-img create -f raw $(DISK) $(DISK_SIZE)
 
-format-disk:
-	guestfish -a $(DISK_NAME) run : mkfs ext4 /dev/sda
+setup-$(DISK): $(DISK)
+	sudo losetup -fP $(DISK)
+
+format-$(DISK): setup-$(DISK)
+	sudo parted -s /dev/loop0 mklabel gpt
+	sudo parted -s /dev/loop0 mkpart primary ext4 0% 100%
+	sudo mkfs.ext4 /dev/loop0p1
+
+mount-$(DISK): setup-$(DISK)
+	sudo mount /dev/loop0p1 /mnt
+
+populate-$(DISK):
+	sudo cp -r root/* /mnt
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda console=ttyS0" -drive file=$(DISK_NAME),format=qcow2,index=0,media=disk -nographic
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 init=/sbin/openrc-init console=ttyS0" -drive file=$(DISK_NAME),format=raw,index=0,media=disk -nographic
