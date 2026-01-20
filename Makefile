@@ -61,7 +61,7 @@ compile-littleinit:
 INITRAMFS       = initramfs.cpio.gz
 
 build-initramfs:
-	cd $(LITTLEINIT_BUILDDIR)
+	cd $(LITTLEINIT_BUILDDIR) && \
 	echo init | cpio -o -H newc | gzip > ../../$(INITRAMFS)
 
 run:
