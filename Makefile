@@ -59,12 +59,17 @@ compile-util-linux:
 	make -j$(CPUS) -C $(UTIL-LINUX)
 
 install-initramfs-util-linux:
-	make -j$(CPUS) -C $(UTIL-LINUX) DESTDIR=$PWD/initramfs install
+	sudo make -j$(CPUS) -C $(UTIL-LINUX) DESTDIR=/tmp/initramfs-util-linux install
+	sudo chmod 775 -R /tmp/initramfs-util-linux
+	sudo chown $(whoami):$(whoami) -R /tmp/initramfs-util-linux
+	mkdir -p $(INITRAMFS_DIR)
+	cp -r /tmp/initramfs-util-linux/* $(INITRAMFS_DIR)
+	sudo rm -rf /tmp/initramfs-util-linux
 
 INITRAMFS = initramfs.cpio.gz
 
 build-initramfs:
-	cd $(INITRAMFS_DI) && \
+	cd $(INITRAMFS_DIR) && \
 	find . | cpio -o -H newc | gzip > ../$(INITRAMFS)
 
 run:
