@@ -47,7 +47,7 @@ download-util-linux:
 
 untar-util-linux:
 	if [ ! -d $(UTIL-LINUX) ]; then \
-		unzip $(UTIL-LINUX_TARBALL); \
+		tar -xvf $(UTIL-LINUX_TARBALL); \
 	fi
 
 configure-initramfs-util-linux:
