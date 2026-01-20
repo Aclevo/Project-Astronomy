@@ -40,4 +40,4 @@ create-disk:
 	qemu-img create -f qcow2 $(DISK_NAME) $(DISK_SIZE)
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 console=ttyS0" -drive file=$(DISK_NAME),format=qcow2,index=0,media=disk -nographic
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda console=ttyS0" -drive file=$(DISK_NAME),format=qcow2,index=0,media=disk -nographic
