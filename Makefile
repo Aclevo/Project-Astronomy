@@ -58,11 +58,11 @@ configure-littleinit:
 compile-littleinit:
 	make -j$(CPUS) -C $(LITTLEINIT_BUILDDIR)
 
-LITTLEINIT_INIT = $(LITTLEINIT_BUILDDIR)/init
 INITRAMFS       = initramfs.cpio.gz
 
 build-initramfs:
-	echo $(LITTLEINIT_INIT) | cpio -o -H newc | gzip > $(INITRAMFS)
+	cd $(LITTLEINIT_BUILDDIR)
+	echo init | cpio -o -H newc | gzip > ../../$(INITRAMFS)
 
 run:
 	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -initrd $(INITRAMFS) -append "init=/init console=ttyS0" -nographic
