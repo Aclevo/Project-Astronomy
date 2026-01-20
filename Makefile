@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: linux littleinit
+all: linux littleinit build-initramfs
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -57,6 +57,11 @@ configure-littleinit:
 
 compile-littleinit:
 	make -j$(CPUS) -C $(LITTLEINIT_BUILDDIR)
+
+LITTLEINIT_INIT = $(LITTLEINIT_BUILDDIR)/init
+
+build-initramfs:
+	echo $(LITTLEINIT_INIT) | cpio -o -H newc | gzip > initramfs.cpio.gz
 
 run:
 	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE)
