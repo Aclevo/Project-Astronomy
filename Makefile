@@ -65,4 +65,4 @@ build-initramfs:
 	echo $(LITTLEINIT_INIT) | cpio -o -H newc | gzip > $(INITRAMFS)
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -initrd $(INITRAMFS) -apend "init=/init"
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -initrd $(INITRAMFS) -append "init=/init"
