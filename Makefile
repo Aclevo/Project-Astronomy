@@ -33,5 +33,26 @@ configure-linux:
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
+LITTLEINIT_VERSION  =	
+LITTLEINIT          = main
+LITTLEINIT_TARBALL  = main.zip
+LITTLEINIT_LINK     = https://github.com/GNUfault/littleinit/archive/refs/heads/$(LITTLEINIT_TARBALL)
+LITTLEINIT_BUILDDIR = $(LITTLEINIT)/build
+
+littleinit: download-littleinit untar-littleinit configure-littleinit compile-littleinit
+
+download-littleinit:
+	wget $(LITTLEINIT_LINK)
+
+untar-littleinit:
+	unzip $(LITTLEINIT_TARBALL)
+
+configure-littleinit:
+	mkdir -p $(LITTLEINIT_BUILDDIR)
+	cmake -S $(LITTLEINIT) -B $(LITTLEINIT_BUILDDIR)
+
+compile-littleinit:
+	make -j$(CPUS) -C $(LITTLEINIT_BUILDDIR)
+
 run:
 	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE)
