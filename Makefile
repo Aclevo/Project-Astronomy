@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: linux initramfs-util-linux build-initramfs
+all: linux
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -33,44 +33,6 @@ configure-linux:
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
-UTIL-LINUX_VERSION = 2.41.3
-UTIL-LINUX         = util-linux-2.41.3
-UTIL-LINUX_TARBALL = $(UTIL-LINUX).tar.xz
-UTIL-LINUX_LINK    = https://www.kernel.org/pub/linux/utils/util-linux/v2.41/$(UTIL-LINUX_TARBALL)
-INITRAMFS_DIR      = initramfs
-
-initramfs-util-linux: download-util-linux untar-util-linux configure-initramfs-util-linux compile-util-linux install-initramfs-util-linux
-
-download-util-linux:
-	if [ ! -f $(UTIL-LINUX_TARBALL) ]; then \
-		wget $(UTIL-LINUX_LINK); \
-	fi
-
-untar-util-linux:
-	if [ ! -d $(UTIL-LINUX) ]; then \
-		tar -xvf $(UTIL-LINUX_TARBALL); \
-	fi
-
-configure-initramfs-util-linux:
-	cd $(UTIL-LINUX) && \
-	./configure --disable-all-programs --enable-mount --enable-fsck --enable-switch_root --enable-libmount --enable-libblkid
-
-compile-util-linux:
-	make -j$(CPUS) -C $(UTIL-LINUX)
-
-install-initramfs-util-linux:
-	sudo make -j$(CPUS) -C $(UTIL-LINUX) DESTDIR=/tmp/initramfs-util-linux install
-	sudo chmod 775 -R /tmp/initramfs-util-linux
-	sudo chown $(whoami):$(whoami) -R /tmp/initramfs-util-linux
-	mkdir -p $(INITRAMFS_DIR)
-	cp -r /tmp/initramfs-util-linux/* $(INITRAMFS_DIR)
-	sudo rm -rf /tmp/initramfs-util-linux
-
-INITRAMFS = initramfs.cpio.gz
-
-build-initramfs:
-	cd $(INITRAMFS_DIR) && \
-	find . | cpio -o -H newc | gzip > ../$(INITRAMFS)
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -initrd $(INITRAMFS) -append "init=/init console=ttyS0" -nographic
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 console=ttyS0" -nographic
