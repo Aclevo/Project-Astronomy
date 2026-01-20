@@ -51,7 +51,8 @@ untar-util-linux:
 	fi
 
 configure-initramfs-util-linux:
-	cd ./configure --disable-all-programs --enable-mount --enable-fsck --enable-switch_root --enable-libmount --enable-libblkid
+	cd $(UTIL-LINUX) && \
+	./configure --disable-all-programs --enable-mount --enable-fsck --enable-switch_root --enable-libmount --enable-libblkid
 
 compile-util-linux:
 	make -j$(CPUS) -C $(UTIL-LINUX)
