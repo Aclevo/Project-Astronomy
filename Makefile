@@ -28,6 +28,11 @@ configure-linux:
                 make -j$(CPUS) -C $(LINUX) defconfig
         fi
 
-# for some reason this crashes my terminal
+# For some reason this crashes my terminal
+# if that ever does happen to you need to
+# go into the kernel source, 
+# run "$ make -j$(CPUS) -C <KERNEL SOURCE>"
+# and skip "compile-linux" but hopefully
+# that will be fixed soon!
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
