@@ -16,17 +16,17 @@ linux: download-linux untar-linux configure-linux compile-linux # install-linux-
 download-linux:
 		if [ -f $(LINUX_TARBALL) ]; then \
                 wget $(LINUX_LINK)
-        fi
+		fi
 
 untar-linux:
-        if [ -f $(LINUX) ]; then \
+		if [ -f $(LINUX) ]; then \
                 tar -xvf $(LINUX_TARBALL)
-        fi
+		fi
 
 configure-linux:
-        if [ -f $(LINUX_CONFIG) ]; then \
+		if [ -f $(LINUX_CONFIG) ]; then \
 			make -j$(CPUS) -C $(LINUX) defconfig
-        fi
+		fi
 
 # For some reason this crashes my terminal
 # if that ever does happen to you need to
