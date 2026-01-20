@@ -42,10 +42,14 @@ LITTLEINIT_BUILDDIR = $(LITTLEINIT)/build
 littleinit: download-littleinit untar-littleinit configure-littleinit compile-littleinit
 
 download-littleinit:
-	wget $(LITTLEINIT_LINK)
+	if [ ! -f $(LITTLEINIT_TARBALL) ]; then \
+		wget $(LITTLEINIT_LINK)
+	fi
 
 untar-littleinit:
-	unzip $(LITTLEINIT_TARBALL)
+	if [ ! -d $(LITTLEINIT) ]; then \
+		unzip $(LITTLEINIT_TARBALL)
+	fi
 
 configure-littleinit:
 	mkdir -p $(LITTLEINIT_BUILDDIR)
