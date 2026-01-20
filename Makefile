@@ -37,8 +37,9 @@ UTIL-LINUX_VERSION = 2.41.3
 UTIL-LINUX         = util-linux-2.41.3
 UTIL-LINUX_TARBALL = $(UTIL-LINUX).tar.xz
 UTIL-LINUX_LINK    = https://www.kernel.org/pub/linux/utils/util-linux/v2.41/$(UTIL-LINUX_TARBALL)
+INITRAMFS_DIR      = initramfs
 
-initramfs-util-linux: download-util-linux untar-util-linux configure-initramfs-util-linux compile-util-linux
+initramfs-util-linux: download-util-linux untar-util-linux configure-initramfs-util-linux compile-util-linux install-initramfs-util-linux
 
 download-util-linux:
 	if [ ! -f $(UTIL-LINUX_TARBALL) ]; then \
@@ -57,10 +58,13 @@ configure-initramfs-util-linux:
 compile-util-linux:
 	make -j$(CPUS) -C $(UTIL-LINUX)
 
+install-initramfs-util-linux:
+	make -j$(CPUS) -C $(UTIL-LINUX) DESTDIR=$PWD/initramfs install
+
 INITRAMFS = initramfs.cpio.gz
 
 build-initramfs:
-	cd $(UTIL-LINUX) && \
+	cd $(INITRAMFS_DI) && \
 	find . | cpio -o -H newc | gzip > ../$(INITRAMFS)
 
 run:
