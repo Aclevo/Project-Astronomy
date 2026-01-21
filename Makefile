@@ -72,4 +72,4 @@ populate-$(DISK):
 	sudo cp -r root/* /mnt
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 init=/sbin/openrc-init console=ttyS0" -drive file=$(DISK_NAME),format=raw,index=0,media=disk -nographic
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 init=/sbin/openrc-init console=ttyS0" -drive file=$(DISK),format=raw,index=0,media=disk -nographic
