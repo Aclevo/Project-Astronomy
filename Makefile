@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: disk linux openrc
+all: disk linux openrc populate-rootfs.img
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -24,9 +24,9 @@ untar-linux:
 configure-linux:
 	make -j$(CPUS) -C $(LINUX) defconfig
 
-# For some reason this crashes my terminal.
-# If that ever does happen to you, 
-# you need to go into the kernel source,
+# For some reason this crashes my terminal
+# if that ever does happen to you need to
+# go into the kernel source,
 # run "$ make -j$(CPUS) -C <KERNEL SOURCE>"
 # and skip "compile-linux" but hopefully
 # that will be fixed soon!
@@ -34,17 +34,25 @@ compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
 openrc:
-	wget https://github.com/OpenRC/openrc/archive/refs/tags/0.63.tar.gz
-	tar -xvf 0.63.tar.gz
+	if [ ! -f 0.63.tar.gz ]; then \
+		wget https://github.com/OpenRC/openrc/archive/refs/tags/0.63.tar.gz; \
+	fi
+
+	if [ ! -f openrc-0.63 ]; then \
+		tar -xvf 0.63.tar.gz; \
+	fi
+
 	cd openrc-0.63 && \
 	meson setup build
+
 	ninja -C openrc-0.63/build
+
 	DESTDIR=../../root ninja -C openrc-0.63/build install
 
 DISK      = rootfs.img
 DISK_SIZE = 16G
 
-disk: create-disk format-disk
+disk: $(DISK) format-$(DISK)
 
 $(DISK):
 	qemu-img create -f raw $(DISK) $(DISK_SIZE)
@@ -55,7 +63,7 @@ setup-$(DISK): $(DISK)
 format-$(DISK): setup-$(DISK)
 	sudo parted -s /dev/loop0 mklabel gpt
 	sudo parted -s /dev/loop0 mkpart primary ext4 0% 100%
-	sudo mkfs.ext4 /dev/loop0p1
+	yes | sudo mkfs.ext4 /dev/loop0p1
 
 mount-$(DISK): setup-$(DISK)
 	sudo mount /dev/loop0p1 /mnt
