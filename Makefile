@@ -7,7 +7,7 @@ LINUX_TARBALL = $(LINUX).tar.xz
 LINUX_LINK    = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(LINUX_TARBALL)
 LINUX_BZIMAGE = $(LINUX)/arch/x86_64/boot/bzImage
 
-all: disk linux openrc populate-rootfs.img
+all: disk linux systemd symlink detach-rootfs.img
 
 linux: download-linux untar-linux configure-linux compile-linux
 
@@ -33,26 +33,29 @@ configure-linux:
 compile-linux:
 	make -j$(CPUS) -C $(LINUX)
 
-openrc:
-	if [ ! -f 0.63.tar.gz ]; then \
-		wget https://github.com/OpenRC/openrc/archive/refs/tags/0.63.tar.gz; \
+systemd:
+	if [ ! -f v259.tar.gz ]; then \
+		wget https://github.com/systemd/systemd/archive/refs/tags/v259.tar.gz; \
 	fi
 
-	if [ ! -f openrc-0.63 ]; then \
-		tar -xvf 0.63.tar.gz; \
+	if [ ! -f systemd-259 ]; then \
+		tar -xvf v259.tar.gz; \
 	fi
 
-	cd openrc-0.63 && \
-	meson setup build
+	meson setup ./systemd-259/build ./systemd-259 -D buildtype=release -D optimization=2
+	ninja -C ./systemd-259/build
+	sudo DESTDIR=/mnt ninja -C ./systemd-259/build install
 
-	ninja -C openrc-0.63/build
-
-	DESTDIR=../../root ninja -C openrc-0.63/build install
+symlink:
+	sudo ln -s /mnt/usr/bin /mnt/bin
+	sudo ln -s /mnt/usr/sbin /mnt/sbin
+	sudo ln -s /mnt/usr/lib /mnt/lib
+	sudo ln -s /mnt/usr/lib64 /mnt/lib64
 
 DISK      = rootfs.img
 DISK_SIZE = 16G
 
-disk: $(DISK) format-$(DISK)
+disk: format-$(DISK) mount-$(DISK)
 
 $(DISK):
 	qemu-img create -f raw $(DISK) $(DISK_SIZE)
@@ -68,8 +71,12 @@ format-$(DISK): setup-$(DISK)
 mount-$(DISK): setup-$(DISK)
 	sudo mount /dev/loop0p1 /mnt
 
-populate-$(DISK):
-	sudo cp -r root/* /mnt
+unmount-$(DISK):
+	sync
+	sudo umount /mnt
+
+detach-$(DISK): unmount-$(DISK)
+	sudo losetup -d /dev/loop0
 
 run:
-	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -append "root=/dev/sda1 init=/sbin/openrc-init console=ttyS0" -drive file=$(DISK),format=raw,index=0,media=disk -nographic
+	qemu-system-x86_64 -kernel $(LINUX_BZIMAGE) -hda rootfs.img -append "init=/lib/systemd/systemd root=/dev/sda1 console=ttyS0" -nographic
