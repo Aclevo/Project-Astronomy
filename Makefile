@@ -1,20 +1,30 @@
-# Quick and dirty Makefile for building Linux kernel
-CPUS := $(shell nproc)
-OUT ?= out
+CPUS               := $(shell nproc)
+CFLAGS             ?= -O2
+CPPFLAGS	   ?= -I $(PWD)/$(ROOTFS)/usr/include
+LD_FLAGS	   ?=
+OUT                ?= out
+ROOTFS             ?= $(OUT)/mnt
+LDFLAGS		   += -L/$(PWD)/$(ROOTFS)/usr/lib
+LDFLAGS		   += -L/$(PWD)/$(ROOTFS)/usr/lib/x86_64-linux-gnu
+DOWNLOAD_DIR       ?= $(OUT)/download
+SUBMAKEFILES        = $(wildcard build/*.mk)
+PACKAGES            = $(SUBMAKEFILES:build/%.mk=%) 
+DOWNLOAD_TARGETS    = $(PACKAGES:%=download-%)
+LIBRARY_PATH 	   ?= $(PWD)/$(ROOTFS)/usr/lib:$(PWD)/$(ROOTFS)/usr/lib64:$(PWD)/$(ROOTFS)/usr/lib/x86_64-linux-gnu/
+COMMON_CONFIG_FLAGS = LIBRARY_PATH="$(LIBRARY_PATH)" CXX=$(PWD)/$(TOOLS_ROOT)/bin/x86_64-linux-gnu-g++ CPP=$(PWD)/$(TOOLS_ROOT)/bin/x86_64-linux-gnu-cpp CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 
-.PHONY: all download-all
+.PHONY: all download-all disk symlink packages
+.NOTPARALLEL: all download-all packages disk
 
-all: $(OUT)/mnt download-all linux systemd symlink coreutils disk
+all: $(ROOTFS) symlink download-all packages disk
 
-download-all: download-linux download-systemd download-coreutils 
+download-all: $(DOWNLOAD_TARGETS) | $(ROOTFS)
+packages: $(PACKAGES) | $(DOWNLOAD_TARGETS)
 
-include build/linux.mk
-include build/systemd.mk
-include build/coreutils.mk
-include build/bash.mk
+include $(SUBMAKEFILES)
 
-symlink:
-	cd $(OUT)/mnt;\
+symlink: $(ROOTFS)
+	cd $(ROOTFS);\
 	 ln -sf usr/bin bin;\
 	 ln -sf usr/sbin sbin;\
 	 ln -sf usr/lib lib;\
@@ -22,10 +32,10 @@ symlink:
 
 RAMDISK = $(OUT)/initrd.cpio.gz
 
-disk: $(RAMDISK)
+disk: $(RAMDISK) | $(PACKAGES)
 
-$(RAMDISK): $(OUT)/mnt
-	cd $(OUT)/mnt;\
+$(RAMDISK): $(ROOTFS)
+	cd $(ROOTFS);\
 	 fakeroot find . | fakeroot cpio -o -H newc | gzip > $(PWD)/$(RAMDISK)
 
 run:
@@ -33,24 +43,16 @@ run:
 		-cpu host \
 		-kernel $(LINUX_BZIMAGE) \
 		-initrd  $(RAMDISK) \
-		-append "rdinit=/bin/bash console=ttyS0 raid=noautodetect" \
+		-append "LD_LIBRARY_PATH="/lib:/lib64:/lib/x86_64-linux-gnu" rdinit=/bin/bash console=ttyS0 raid=noautodetect" \
 		-m 1G \
 		-serial stdio \
 		-display none \
 		--enable-kvm
-$(OUT)/mnt:
-	mkdir -p $(OUT)/mnt/usr/lib64 $(OUT)/mnt/usr/lib/x86_64-linux-gnu\
-		$(OUT)/download
-	cd $(OUT)/mnt ;\
-	 cp /lib64/ld-linux-x86-64.so.2 usr/lib64/;\
-	 cp /lib/x86_64-linux-gnu/libc.so.6 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libm.so.6 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libcrypt.so.1 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libcrypto.so.3 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libz.so.1 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libzstd.so.1 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libselinux.so.1 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libcap.so.2 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libpcre2-8.so.0 usr/lib/x86_64-linux-gnu/;\
-	 cp /lib/x86_64-linux-gnu/libtinfo.so.6 usr/lib/x86_64-linux-gnu/
+
+$(ROOTFS):
+	mkdir -p $(ROOTFS)/usr/lib64 $(ROOTFS)/usr/lib/x86_64-linux-gnu\
+		$(ROOTFS)/usr/bin $(ROOTFS)/usr/sbin $(ROOTFS)/usr/lib\
+	       	$(ROOTFS)/usr/lib64 $(DOWNLOAD_DIR)
+	# Missing shared objects that should be added later:
+	# libz.so.1 libzstd.so.1 
 
